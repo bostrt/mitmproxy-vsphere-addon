@@ -1,6 +1,6 @@
 ## Read flows from a file
 ```shell
-$ mitmproxy -s dump-permission-failure.py \
+$ mitmproxy -s dump_permission_failure.py \
   --set console_eventlog_verbosity=debug \
   --set vs_dump_flows=dumpfile.out \
   -r ./myflows.out
@@ -8,7 +8,7 @@ $ mitmproxy -s dump-permission-failure.py \
 
 ## Run MITMProxy live with script
 ```shell
-$ mitmproxy -s dump-permission-failure.py \
+$ mitmproxy -s dump_permission_failure.py \
   --set console_eventlog_verbosity=debug \
   --set vs_dump_flows=dumpfile.out
 ```

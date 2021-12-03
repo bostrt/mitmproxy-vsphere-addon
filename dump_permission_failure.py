@@ -10,7 +10,7 @@ Flat file structure:
   TODO
 
 Run with:
-  $ mitmproxy -s ./dump-permission-failure.py <dump-file>
+  $ mitmproxy -s ./dump_permission_failure.py <dump-file>
        [--set vs_dump_flows=FILE]
        [--set vs_dump_csv=FILE]
        [--set vs_duplicates=true|false]
@@ -54,6 +54,7 @@ def check_soap_permission_fault(response: typing.Optional[http.Response]) -> boo
         return False
 
 
+# Added for unit tests. See check_soap_permission_fault for doc.
 def _check_soap_permission_fault_body(response_body: str) -> bool:
     try:
         dom = ElementTree.fromstring(response_body)
@@ -66,17 +67,20 @@ def _check_soap_permission_fault_body(response_body: str) -> bool:
         return False
 
 
-def get_csv_fields_from_response(response: typing.Optional[http.Response]) -> dict:
+def get_csv_fields_from_response(response_body: str) -> dict:
     """
     Assumes a privilege failure response is given as parameter. Extracts the fields from
     a response required for the CSV writer.
-    :param response: Must be an HTTP response containing a vSphere privilege failure.
+    :param response_body: Must be an HTTP response body containing a vSphere privilege failure.
     :return: A dictionary of CSV field names to values or None upon error.
     """
     try:
-        dom = ElementTree.fromstring(response.data.content)
+        dom = ElementTree.fromstring(response_body)
         fault_object = dom.find('./soapenv:Body/soapenv:Fault/detail/vim25:NoPermissionFault/vim25:object', namespaces=namespaces)
         privilege_missing = dom.find('./soapenv:Body/soapenv:Fault/detail/vim25:NoPermissionFault/vim25:privilegeId', namespaces=namespaces)
+        if fault_object is None or privilege_missing is None:
+            return None
+
         result = dict()
         result["ObjectType"] = fault_object.get("type")
         result["ObjectName"] = fault_object.text
@@ -106,7 +110,7 @@ class Writer:
                 self.csv_writer = csv.DictWriter(self.csv_file, field_names)
             self.show_dup = ctx.options.vs_duplicates
 
-            ctx.log.debug("dump-permission-failure.py running")
+            ctx.log.debug("dump_permission_failure.py running")
         except:  # noqa
             # TODO Log exception?
             ctx.master.shutdown()
@@ -135,7 +139,7 @@ class Writer:
             default=False,
         )
 
-        ctx.log.debug("dump-permission-failure.py loaded")
+        ctx.log.debug("dump_permission_failure.py loaded")
 
     # https://docs.mitmproxy.org/stable/api/events.html#HTTPEvents.response
     def response(self, flow: http.HTTPFlow) -> None:
@@ -145,7 +149,7 @@ class Writer:
             self._log_flow(flow)
 
     def _log_flow(self, flow: http.HTTPFlow) -> None:
-        fields = get_csv_fields_from_response(flow.response)
+        fields = get_csv_fields_from_response(flow.response.data.content)
         if fields is None:
             return
 
