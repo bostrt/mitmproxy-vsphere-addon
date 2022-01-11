@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mitmproxy
+  labels:
+    app: mitmproxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mitmproxy
+  template:
+    metadata:
+      labels:
+        app: mitmproxy
+    spec:
+      containers:
+      - name: mitmproxy
+        image: quay.io/bostrt/mitmproxy-addon-test
+        securityContext:
+          runAsUser: 0
+        ports:
+        - containerPort: 8080
+        - containerPort: 8081
+
